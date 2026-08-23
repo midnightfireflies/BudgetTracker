@@ -3,58 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Budget Calculator</title>
+    <title>Dynamic Budget Calculator</title>
     <style>
-        /* This is the CSS to make it look nice */
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; padding: 50px; }
-        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 350px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        button { width: 100%; background: #007bff; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        button:hover { background: #0056b3; }
-        .result-box { margin-top: 20px; display: none; }
-        .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
-        .total-row { font-weight: bold; font-size: 1.1em; border-bottom: 2px solid #ddd; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 40px 20px; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h2 { text-align: center; margin-top: 0; color: #333; }
+        
+        .salary-group { margin-bottom: 25px; }
+        .salary-group label { font-weight: bold; display: block; margin-bottom: 5px; color: #555;}
+        .salary-group input { width: 100%; padding: 12px; font-size: 18px; border: 2px solid #007bff; border-radius: 6px; box-sizing: border-box; }
+
+        .row { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+        .row input[type="text"] { flex: 2; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .row input[type="number"] { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-align: center;}
+        .amount { flex: 1.2; text-align: right; font-weight: bold; color: #333; }
+        
+        button { cursor: pointer; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s;}
+        .del-btn { background: #dc3545; color: white; padding: 8px 12px; }
+        .del-btn:hover { background: #c82333; }
+        .add-btn { background: #28a745; color: white; width: 100%; padding: 12px; margin-top: 10px; font-size: 15px;}
+        .add-btn:hover { background: #218838; }
+
+        .summary { margin-top: 25px; padding-top: 15px; border-top: 2px solid #eee; }
+        .summary-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; }
+        .error-msg { color: #dc3545; font-size: 13px; display: none; text-align: center; margin-top: 5px;}
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2>Budget Calculator</h2>
-        <input type="number" id="salaryInput" placeholder="Enter your salary (e.g., 10000)">
-        <button onclick="calculateBudget()">Calculate</button>
+        <h2>Dynamic Budget</h2>
+        
+        <div class="salary-group">
+            <label>Total Salary Amount:</label>
+            <input type="number" id="salary" value="10000" oninput="calculate()">
+        </div>
 
-        <!-- This is where the results will appear -->
-        <div class="result-box" id="results">
-            <div class="row total-row"><span>Total Salary:</span><span id="total">0</span></div>
-            <div class="row"><span>ধার শোধ (25%):</span><span id="debt">0</span></div>
-            <div class="row"><span>মেডিকেল ফান্ড (5%):</span><span id="medical">0</span></div>
-            <div class="row"><span>ইমারজেন্সি (10%):</span><span id="emergency">0</span></div>
-            <div class="row"><span>Ghuraghuri (5%):</span><span id="travel">0</span></div>
-            <div class="row"><span>এক্সপেন্স (55%):</span><span id="expense">0</span></div>
+        <!-- The header for the columns -->
+        <div class="row" style="font-weight: bold; color: #666; font-size: 14px;">
+            <div style="flex: 2;">Category</div>
+            <div style="flex: 1; text-align: center;">%</div>
+            <div style="flex: 1.2; text-align: right; padding-right: 40px;">Amount</div>
+        </div>
+
+        <!-- Categories will be injected here by JavaScript -->
+        <div id="category-list"></div>
+
+        <button class="add-btn" onclick="addCategory()">+ Add New Category</button>
+        
+        <div class="error-msg" id="pct-error">Warning: Percentages must add up to exactly 100%</div>
+
+        <div class="summary">
+            <div class="summary-row">
+                <span>Total %: <span id="total-pct">0</span>%</span>
+                <span><span id="total-amount">0.00</span></span>
+            </div>
         </div>
     </div>
 
     <script>
-        /* This is the JavaScript that does the math */
-        function calculateBudget() {
-            let salary = parseFloat(document.getElementById('salaryInput').value);
-            
-            if (isNaN(salary) || salary <= 0) {
-                alert("Please enter a valid salary amount.");
-                return;
-            }
+        // These are your starting categories. You can change them directly in the browser now!
+        let categories = [
+            { name: 'ধার শোধ', pct: 25 },
+            { name: 'মেডিকেল ফান্ড', pct: 5 },
+            { name: 'ইমারজেন্সি', pct: 10 },
+            { name: 'Ghuraghuri', pct: 5 },
+            { name: 'এক্সপেন্স', pct: 55 }
+        ];
 
-            // Calculate and display values
-            document.getElementById('total').innerText = salary.toFixed(2);
-            document.getElementById('debt').innerText = (salary * 0.25).toFixed(2);
-            document.getElementById('medical').innerText = (salary * 0.05).toFixed(2);
-            document.getElementById('emergency').innerText = (salary * 0.10).toFixed(2);
-            document.getElementById('travel').innerText = (salary * 0.05).toFixed(2);
-            document.getElementById('expense').innerText = (salary * 0.55).toFixed(2);
+        // This function draws the rows on the screen
+        function render() {
+            const list = document.getElementById('category-list');
+            list.innerHTML = ''; // Clear current list
             
-            // Unhide the results box
-            document.getElementById('results').style.display = "block";
+            categories.forEach((cat, index) => {
+                list.innerHTML += `
+                    <div class="row">
+                        <input type="text" value="${cat.name}" oninput="updateName(${index}, this.value)" placeholder="Category Name">
+                        <input type="number" value="${cat.pct}" oninput="updatePct(${index}, this.value)">
+                        <span class="amount" id="amt-${index}">0</span>
+                        <button class="del-btn" onclick="removeCategory(${index})" title="Delete">X</button>
+                    </div>
+                `;
+            });
+            calculate(); // Recalculate everything after drawing
         }
+
+        // Functions to handle updates when you type
+        function updateName(index, val) { categories[index].name = val; }
+        
+        function updatePct(index, val) {
+            categories[index].pct = parseFloat(val) || 0;
+            calculate();
+        }
+
+        function addCategory() {
+            categories.push({ name: 'New Category', pct: 0 });
+            render();
+        }
+
+        function removeCategory(index) {
+            categories.splice(index, 1);
+            render();
+        }
+
+        // The main math engine
+        function calculate() {
+            const salary = parseFloat(document.getElementById('salary').value) || 0;
+            let totalPct = 0;
+            let totalAmt = 0;
+
+            // Loop through each category to do the math
+            categories.forEach((cat, i) => {
+                totalPct += cat.pct;
+                const amt = (salary * (cat.pct / 100));
+                totalAmt += amt;
+                
+                // Update the specific row's amount text
+                const amtElement = document.getElementById('amt-'+i);
+                if(amtElement) amtElement.innerText = amt.toFixed(2);
+            });
+
+            // Update the bottom totals
+            document.getElementById('total-pct').innerText = totalPct;
+            document.getElementById('total-amount').innerText = totalAmt.toFixed(2);
+
+            // Show a warning if it doesn't equal exactly 100%
+            const errorMsg = document.getElementById('pct-error');
+            if (totalPct !== 100) {
+                errorMsg.style.display = 'block';
+                document.getElementById('total-pct').style.color = '#dc3545';
+            } else {
+                errorMsg.style.display = 'none';
+                document.getElementById('total-pct').style.color = 'black';
+            }
+        }
+
+        // Run this once when the page loads
+        render();
     </script>
 </body>
 </html>
