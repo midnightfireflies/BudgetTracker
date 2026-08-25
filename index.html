@@ -29,15 +29,26 @@
             display: flex; flex-direction: column; gap: 20px;
         }
 
-        /* Balance Card */
+        /* Top Cards */
+        .top-section { display: flex; gap: 15px; }
+        
         .balance-card {
             background: var(--text); color: var(--surface);
-            padding: 30px 20px; border-radius: 24px;
-            text-align: center;
+            padding: 25px 20px; border-radius: 24px;
+            text-align: center; flex: 2;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
-        .balance-label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; }
-        .balance-amount { font-size: 3.5rem; font-weight: 700; margin: 10px 0; }
+        .balance-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+        .balance-amount { font-size: 2.8rem; font-weight: 700; margin: 5px 0; }
+
+        .spent-card {
+            background: #ffe4e6; color: var(--danger);
+            padding: 25px 15px; border-radius: 24px;
+            text-align: center; flex: 1;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .spent-label { font-size: 0.75rem; text-transform: uppercase; font-weight: 700;}
+        .spent-amount { font-size: 1.5rem; font-weight: 700; margin-top: 5px; }
 
         /* Action Buttons */
         .action-row { display: flex; gap: 15px; }
@@ -52,15 +63,22 @@
 
         /* Budget Categories */
         .section-title { font-size: 1.1rem; font-weight: 700; margin: 10px 0 0 0; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         
-        .category-card {
+        /* Highlighted Expense Card */
+        .main-expense-card {
             background: var(--surface); padding: 20px; border-radius: 20px;
+            border: 2px solid #e4e4e7; border-left: 6px solid var(--accent);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .category-card {
+            background: var(--surface); padding: 15px; border-radius: 16px;
             border: 1px solid #e4e4e7;
             display: flex; flex-direction: column; justify-content: space-between;
         }
-        .cat-title { font-size: 0.85rem; color: var(--text-light); font-weight: 600; margin-bottom: 8px;}
-        .cat-amount { font-size: 1.4rem; font-weight: 700; }
+        .cat-title { font-size: 0.8rem; color: var(--text-light); font-weight: 600; margin-bottom: 8px;}
+        .cat-amount { font-size: 1.2rem; font-weight: 700; }
 
         /* History */
         .history-card {
@@ -84,9 +102,15 @@
 <body>
 
 <div class="container">
-    <div class="balance-card">
-        <div class="balance-label">Total Balance</div>
-        <div class="balance-amount" id="ui-balance">0</div>
+    <div class="top-section">
+        <div class="balance-card">
+            <div class="balance-label">Total Balance</div>
+            <div class="balance-amount" id="ui-balance">0</div>
+        </div>
+        <div class="spent-card">
+            <div class="spent-label">Total Spent</div>
+            <div class="spent-amount" id="ui-spent">0</div>
+        </div>
     </div>
 
     <div class="action-row">
@@ -95,6 +119,15 @@
     </div>
 
     <div class="section-title">Budget Allocations</div>
+    
+    <!-- The 55% Expense gets its own prominent row -->
+    <div class="main-expense-card">
+        <div>
+            <div class="cat-title" style="margin-bottom: 4px;">এক্সপেন্স (General Expenses - 55%)</div>
+        </div>
+        <div class="cat-amount" id="cat-main-exp" style="font-size: 1.5rem;">0</div>
+    </div>
+
     <div class="grid">
         <div class="category-card">
             <div class="cat-title">ধার শোধ (25%)</div>
@@ -124,12 +157,13 @@
 
 <script>
     let appData = {
-        balance: 10000, // Starting with your example salary
+        balance: 10000, 
+        totalSpent: 0, // Now tracking total expenses
         history: []
     };
 
     function init() {
-        const saved = localStorage.getItem('my_custom_budget');
+        const saved = localStorage.getItem('my_custom_budget_v2');
         if (saved) appData = JSON.parse(saved);
         updateUI();
     }
@@ -142,6 +176,7 @@
         
         if (type === 'expense') {
             appData.balance -= amt;
+            appData.totalSpent += amt; // Add to total spent
         } else {
             appData.balance += amt;
         }
@@ -153,21 +188,23 @@
 
     function clearData() {
         if(confirm("Erase everything?")) {
-            appData = { balance: 0, history: [] };
+            appData = { balance: 0, totalSpent: 0, history: [] };
             saveData();
             updateUI();
         }
     }
 
     function saveData() {
-        localStorage.setItem('my_custom_budget', JSON.stringify(appData));
+        localStorage.setItem('my_custom_budget_v2', JSON.stringify(appData));
     }
 
     function updateUI() {
-        // Main Balance
+        // Main Balances
         document.getElementById('ui-balance').innerText = appData.balance.toLocaleString();
+        document.getElementById('ui-spent').innerText = appData.totalSpent.toLocaleString();
 
-        // Calculate custom categories based on current balance
+        // Calculate all 5 categories dynamically
+        document.getElementById('cat-main-exp').innerText = (appData.balance * 0.55).toLocaleString(); // The 55%
         document.getElementById('cat-debt').innerText = (appData.balance * 0.25).toLocaleString();
         document.getElementById('cat-emerg').innerText = (appData.balance * 0.10).toLocaleString();
         document.getElementById('cat-med').innerText = (appData.balance * 0.05).toLocaleString();
