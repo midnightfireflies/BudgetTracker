@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Personal Budget</title>
+    <title>My Envelope Budget</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -18,37 +18,23 @@
 
         body {
             font-family: 'Space Grotesk', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
+            background-color: var(--bg); color: var(--text);
             margin: 0; padding: 20px;
             display: flex; justify-content: center;
         }
 
-        .container {
-            width: 100%; max-width: 450px;
-            display: flex; flex-direction: column; gap: 20px;
-        }
+        .container { width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 20px; }
 
-        /* Top Cards */
-        .top-section { display: flex; gap: 15px; }
-        
+        /* Top Balance Card */
         .balance-card {
             background: var(--text); color: var(--surface);
-            padding: 25px 20px; border-radius: 24px;
-            text-align: center; flex: 2;
+            padding: 30px 20px; border-radius: 24px;
+            text-align: center;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
-        .balance-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
-        .balance-amount { font-size: 2.8rem; font-weight: 700; margin: 5px 0; }
-
-        .spent-card {
-            background: #ffe4e6; color: var(--danger);
-            padding: 25px 15px; border-radius: 24px;
-            text-align: center; flex: 1;
-            display: flex; flex-direction: column; justify-content: center;
-        }
-        .spent-label { font-size: 0.75rem; text-transform: uppercase; font-weight: 700;}
-        .spent-amount { font-size: 1.5rem; font-weight: 700; margin-top: 5px; }
+        .balance-label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; }
+        .balance-amount { font-size: 3rem; font-weight: 700; margin: 5px 0; }
+        .total-spent { font-size: 0.9rem; color: #fca5a5; margin-top: 5px; }
 
         /* Action Buttons */
         .action-row { display: flex; gap: 15px; }
@@ -59,42 +45,47 @@
         }
         .btn:active { transform: scale(0.97); }
         .btn-income { background: var(--surface); border: 2px solid var(--text); color: var(--text); }
-        .btn-expense { background: var(--surface); border: 2px solid var(--text); color: var(--text); }
+        .btn-expense { background: var(--danger); color: white; border: 2px solid var(--danger); }
 
-        /* Budget Categories */
+        /* Categories Grid */
         .section-title { font-size: 1.1rem; font-weight: 700; margin: 10px 0 0 0; }
         
-        /* Highlighted Expense Card */
-        .main-expense-card {
-            background: var(--surface); padding: 20px; border-radius: 20px;
-            border: 2px solid #e4e4e7; border-left: 6px solid var(--accent);
+        .grid { display: flex; flex-direction: column; gap: 12px; }
+        .category-card {
+            background: var(--surface); padding: 15px 20px; border-radius: 16px;
+            border: 1px solid #e4e4e7; border-left: 5px solid var(--accent);
             display: flex; justify-content: space-between; align-items: center;
         }
-        
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .category-card {
-            background: var(--surface); padding: 15px; border-radius: 16px;
-            border: 1px solid #e4e4e7;
-            display: flex; flex-direction: column; justify-content: space-between;
-        }
-        .cat-title { font-size: 0.8rem; color: var(--text-light); font-weight: 600; margin-bottom: 8px;}
-        .cat-amount { font-size: 1.2rem; font-weight: 700; }
+        .cat-info h3 { margin: 0 0 5px 0; font-size: 1rem; }
+        .cat-stats { font-size: 0.75rem; color: var(--text-light); }
+        .cat-balance { text-align: right; }
+        .cat-balance .rem { font-size: 1.3rem; font-weight: 700; color: var(--text); }
+        .cat-balance .spent { font-size: 0.8rem; color: var(--danger); }
 
         /* History */
-        .history-card {
-            background: var(--surface); padding: 20px; border-radius: 20px;
-            border: 1px solid #e4e4e7; min-height: 150px;
-        }
-        .tx-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 0; border-bottom: 1px solid #f4f4f5;
-        }
+        .history-card { background: var(--surface); padding: 20px; border-radius: 20px; border: 1px solid #e4e4e7; min-height: 150px; }
+        .tx-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f4f4f5; }
         .tx-item:last-child { border-bottom: none; }
         .tx-info h4 { margin: 0; font-size: 0.95rem; }
         .tx-info p { margin: 4px 0 0 0; font-size: 0.75rem; color: var(--text-light); }
         .tx-amt { font-weight: 700; font-size: 1.1rem; }
         .amt-in { color: var(--success); }
         .amt-out { color: var(--danger); }
+
+        /* Modal / Dialog */
+        dialog {
+            border: none; border-radius: 20px; padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 90%; max-width: 350px;
+            background: var(--surface);
+        }
+        dialog::backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px;
+            font-family: inherit; font-size: 1rem; box-sizing: border-box;
+        }
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
         
         .reset-btn { text-align: center; color: var(--text-light); font-size: 0.8rem; margin-top: 20px; cursor: pointer; text-decoration: underline; }
     </style>
@@ -102,127 +93,175 @@
 <body>
 
 <div class="container">
-    <div class="top-section">
-        <div class="balance-card">
-            <div class="balance-label">Total Balance</div>
-            <div class="balance-amount" id="ui-balance">0</div>
-        </div>
-        <div class="spent-card">
-            <div class="spent-label">Total Spent</div>
-            <div class="spent-amount" id="ui-spent">0</div>
-        </div>
+    <div class="balance-card">
+        <div class="balance-label">Total Cash Remaining</div>
+        <div class="balance-amount" id="ui-total-rem">0</div>
+        <div class="total-spent" id="ui-total-spent">Total Spent: 0</div>
     </div>
 
     <div class="action-row">
-        <button class="btn btn-income" onclick="addMoney('income')">+ Add Income</button>
-        <button class="btn btn-expense" onclick="addMoney('expense')">- Add Expense</button>
+        <button class="btn btn-income" onclick="addIncome()">+ Add Salary</button>
+        <button class="btn btn-expense" onclick="openExpenseModal()">- Add Expense</button>
     </div>
 
-    <div class="section-title">Budget Allocations</div>
-    
-    <!-- The 55% Expense gets its own prominent row -->
-    <div class="main-expense-card">
-        <div>
-            <div class="cat-title" style="margin-bottom: 4px;">এক্সপেন্স (General Expenses - 55%)</div>
-        </div>
-        <div class="cat-amount" id="cat-main-exp" style="font-size: 1.5rem;">0</div>
+    <div class="section-title">Where is my money?</div>
+    <div class="grid" id="categories-container">
+        <!-- Rendered by JS -->
     </div>
 
-    <div class="grid">
-        <div class="category-card">
-            <div class="cat-title">ধার শোধ (25%)</div>
-            <div class="cat-amount" id="cat-debt">0</div>
-        </div>
-        <div class="category-card">
-            <div class="cat-title">ইমারজেন্সি (10%)</div>
-            <div class="cat-amount" id="cat-emerg">0</div>
-        </div>
-        <div class="category-card">
-            <div class="cat-title">মেডিকেল (5%)</div>
-            <div class="cat-amount" id="cat-med">0</div>
-        </div>
-        <div class="category-card">
-            <div class="cat-title">Ghuraghuri (5%)</div>
-            <div class="cat-amount" id="cat-travel">0</div>
-        </div>
-    </div>
-
-    <div class="section-title">Recent Transactions</div>
-    <div class="history-card" id="ui-history">
-        <!-- JS will populate this -->
-    </div>
+    <div class="section-title">History</div>
+    <div class="history-card" id="ui-history"></div>
 
     <div class="reset-btn" onclick="clearData()">Reset All Data</div>
 </div>
 
+<!-- Expense Popup Modal -->
+<dialog id="expenseModal">
+    <h3 style="margin-top:0;">Add Expense</h3>
+    <div class="form-group">
+        <label>Amount</label>
+        <input type="number" id="expAmount" placeholder="e.g. 500">
+    </div>
+    <div class="form-group">
+        <label>Which Category?</label>
+        <select id="expCategory">
+            <option value="main">এক্সপেন্স (55%)</option>
+            <option value="debt">ধার শোধ (25%)</option>
+            <option value="emergency">ইমারজেন্সি (10%)</option>
+            <option value="medical">মেডিকেল ফান্ড (5%)</option>
+            <option value="travel">Ghuraghuri (5%)</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Description</label>
+        <input type="text" id="expDesc" placeholder="e.g. Paid brother">
+    </div>
+    <div class="modal-btns">
+        <button class="btn" style="background:#e4e4e7;" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-expense" onclick="saveExpense()">Save Expense</button>
+    </div>
+</dialog>
+
 <script>
+    // System Data Structure (The "Envelopes")
     let appData = {
-        balance: 10000, 
-        totalSpent: 0, // Now tracking total expenses
+        totalIncomeAllTime: 0,
+        categories: {
+            main: { name: "এক্সপেন্স (General)", pct: 0.55, allocated: 0, spent: 0, color: "#2563eb" },
+            debt: { name: "ধার শোধ", pct: 0.25, allocated: 0, spent: 0, color: "#e11d48" },
+            emergency: { name: "ইমারজেন্সি", pct: 0.10, allocated: 0, spent: 0, color: "#f59e0b" },
+            medical: { name: "মেডিকেল ফান্ড", pct: 0.05, allocated: 0, spent: 0, color: "#10b981" },
+            travel: { name: "Ghuraghuri", pct: 0.05, allocated: 0, spent: 0, color: "#8b5cf6" }
+        },
         history: []
     };
 
     function init() {
-        const saved = localStorage.getItem('my_custom_budget_v2');
+        const saved = localStorage.getItem('broke_daddy_envelope_v1');
         if (saved) appData = JSON.parse(saved);
         updateUI();
     }
 
-    function addMoney(type) {
-        let amt = parseFloat(prompt("Enter amount:"));
+    // 1. Adding Salary divides it directly into the category allocations
+    function addIncome() {
+        let amt = parseFloat(prompt("Enter your Salary/Income amount:"));
         if (!amt || isNaN(amt)) return;
 
-        let desc = prompt("What was this for?") || (type === 'income' ? 'Income' : 'Expense');
+        appData.totalIncomeAllTime += amt;
         
-        if (type === 'expense') {
-            appData.balance -= amt;
-            appData.totalSpent += amt; // Add to total spent
-        } else {
-            appData.balance += amt;
+        // Distribute money to each category based on percentages
+        for (let key in appData.categories) {
+            appData.categories[key].allocated += (amt * appData.categories[key].pct);
         }
 
-        appData.history.unshift({ type, amount: amt, desc, date: new Date().toLocaleDateString() });
+        appData.history.unshift({ type: 'income', amount: amt, desc: "Salary Added", date: new Date().toLocaleDateString() });
+        saveData(); updateUI();
+    }
+
+    // 2. Modals for specific expenses
+    const modal = document.getElementById('expenseModal');
+    function openExpenseModal() {
+        document.getElementById('expAmount').value = '';
+        document.getElementById('expDesc').value = '';
+        modal.showModal();
+    }
+    function closeModal() { modal.close(); }
+
+    // 3. Saving the expense from a specific category
+    function saveExpense() {
+        let amt = parseFloat(document.getElementById('expAmount').value);
+        let catKey = document.getElementById('expCategory').value;
+        let desc = document.getElementById('expDesc').value || "Expense";
+
+        if (!amt || isNaN(amt)) { alert("Enter a valid amount"); return; }
+        
+        // Deduct money by increasing the "spent" value of that specific category
+        appData.categories[catKey].spent += amt;
+
+        appData.history.unshift({ 
+            type: 'expense', amount: amt, 
+            desc: `${desc} (${appData.categories[catKey].name})`, 
+            date: new Date().toLocaleDateString() 
+        });
+
         saveData();
+        closeModal();
         updateUI();
     }
 
     function clearData() {
         if(confirm("Erase everything?")) {
-            appData = { balance: 0, totalSpent: 0, history: [] };
-            saveData();
-            updateUI();
+            localStorage.removeItem('broke_daddy_envelope_v1');
+            location.reload(); // Refresh page to clear
         }
     }
 
-    function saveData() {
-        localStorage.setItem('my_custom_budget_v2', JSON.stringify(appData));
-    }
+    function saveData() { localStorage.setItem('broke_daddy_envelope_v1', JSON.stringify(appData)); }
 
     function updateUI() {
-        // Main Balances
-        document.getElementById('ui-balance').innerText = appData.balance.toLocaleString();
-        document.getElementById('ui-spent').innerText = appData.totalSpent.toLocaleString();
+        let grandTotalRemaining = 0;
+        let grandTotalSpent = 0;
+        let categoryHTML = '';
 
-        // Calculate all 5 categories dynamically
-        document.getElementById('cat-main-exp').innerText = (appData.balance * 0.55).toLocaleString(); // The 55%
-        document.getElementById('cat-debt').innerText = (appData.balance * 0.25).toLocaleString();
-        document.getElementById('cat-emerg').innerText = (appData.balance * 0.10).toLocaleString();
-        document.getElementById('cat-med').innerText = (appData.balance * 0.05).toLocaleString();
-        document.getElementById('cat-travel').innerText = (appData.balance * 0.05).toLocaleString();
+        // Calculate and build UI for each category independently
+        for (let key in appData.categories) {
+            let cat = appData.categories[key];
+            let remaining = cat.allocated - cat.spent;
+            
+            grandTotalRemaining += remaining;
+            grandTotalSpent += cat.spent;
 
-        // History
+            categoryHTML += `
+                <div class="category-card" style="border-left-color: ${cat.color}">
+                    <div class="cat-info">
+                        <h3>${cat.name}</h3>
+                        <div class="cat-stats">Allocated: ${cat.allocated.toLocaleString()} ৳</div>
+                    </div>
+                    <div class="cat-balance">
+                        <div class="rem">${remaining.toLocaleString()} ৳</div>
+                        <div class="spent">Spent: ${cat.spent.toLocaleString()} ৳</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update Top Balance
+        document.getElementById('ui-total-rem').innerText = grandTotalRemaining.toLocaleString() + " ৳";
+        document.getElementById('ui-total-spent').innerText = "Total Spent: " + grandTotalSpent.toLocaleString() + " ৳";
+        
+        // Update Categories Grid
+        document.getElementById('categories-container').innerHTML = categoryHTML;
+
+        // Update History
         const histEl = document.getElementById('ui-history');
         if (appData.history.length === 0) {
-            histEl.innerHTML = '<p style="text-align:center; color: #71717a; margin-top: 40px;">No transactions yet.</p>';
+            histEl.innerHTML = '<p style="text-align:center; color: #71717a;">No transactions yet.</p>';
         } else {
             histEl.innerHTML = appData.history.map(tx => `
                 <div class="tx-item">
-                    <div class="tx-info">
-                        <h4>${tx.desc}</h4>
-                        <p>${tx.date}</p>
-                    </div>
+                    <div class="tx-info"><h4>${tx.desc}</h4><p>${tx.date}</p></div>
                     <div class="tx-amt ${tx.type === 'income' ? 'amt-in' : 'amt-out'}">
-                        ${tx.type === 'income' ? '+' : '-'}${tx.amount.toLocaleString()}
+                        ${tx.type === 'income' ? '+' : '-'}${tx.amount.toLocaleString()} ৳
                     </div>
                 </div>
             `).join('');
