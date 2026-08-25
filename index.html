@@ -3,144 +3,308 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Budget Calculator</title>
+    <title>brokedaddy - Budget Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 40px 20px; margin: 0; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
-        h2 { text-align: center; margin-top: 0; color: #333; }
-        
-        .salary-group { margin-bottom: 25px; }
-        .salary-group label { font-weight: bold; display: block; margin-bottom: 5px; color: #555;}
-        .salary-group input { width: 100%; padding: 12px; font-size: 18px; border: 2px solid #007bff; border-radius: 6px; box-sizing: border-box; }
+        :root {
+            --bg-color: #fcfcfc;
+            --text-main: #1a1a1a;
+            --text-muted: #888;
+            --red: #ff4d4d;
+            --border-light: #eaeaea;
+        }
 
-        .row { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
-        .row input[type="text"] { flex: 2; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        .row input[type="number"] { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-align: center;}
-        .amount { flex: 1.2; text-align: right; font-weight: bold; color: #333; }
-        
-        button { cursor: pointer; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s;}
-        .del-btn { background: #dc3545; color: white; padding: 8px 12px; }
-        .del-btn:hover { background: #c82333; }
-        .add-btn { background: #28a745; color: white; width: 100%; padding: 12px; margin-top: 10px; font-size: 15px;}
-        .add-btn:hover { background: #218838; }
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
 
-        .summary { margin-top: 25px; padding-top: 15px; border-top: 2px solid #eee; }
-        .summary-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; }
-        .error-msg { color: #dc3545; font-size: 13px; display: none; text-align: center; margin-top: 5px;}
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            min-height: 100vh;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: -0.5px;
+        }
+        
+        .header-icons { font-size: 1.2rem; }
+
+        /* Top Section */
+        .top-section { padding: 20px; text-align: center; }
+        .circle-progress {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            border: 2px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 30px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .circle-progress span { font-size: 0.6rem; color: var(--text-muted); font-weight: 400; }
+        
+        .instructions {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        /* Zigzag Divider */
+        .zigzag {
+            height: 20px;
+            background: linear-gradient(135deg, #fff 50%, transparent 50%) -10px 0,
+                        linear-gradient(-135deg, #fff 50%, transparent 50%) -10px 0,
+                        linear-gradient(45deg, var(--text-main) 50%, transparent 50%),
+                        linear-gradient(-45deg, var(--text-main) 50%, transparent 50%);
+            background-size: 20px 20px;
+            background-color: #fff;
+            margin: 20px 0;
+        }
+
+        /* Dashboard Core */
+        .dashboard { padding: 0 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .balance-area { text-align: left; }
+        .balance-label { color: var(--text-muted); font-size: 0.8rem; }
+        .balance-amount { font-size: 3rem; font-weight: 700; margin: 5px 0; letter-spacing: -1px; }
+        
+        .stats-row { display: flex; gap: 20px; font-size: 0.8rem; font-weight: 700; }
+        .stats-row span { display: block; font-weight: 400; font-size: 0.7rem; color: var(--text-muted); }
+        .stat-spend { color: #5c7cfa; }
+        .stat-waste { color: var(--red); }
+
+        .controls { display: flex; gap: 10px; }
+        .btn-circle {
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            background: transparent;
+            font-size: 2rem;
+            cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+            transition: 0.2s;
+        }
+        .btn-minus { border: 3px solid var(--red); color: var(--red); }
+        .btn-minus:active { background: #ffe6e6; }
+        .btn-plus { border: 3px solid var(--text-main); color: var(--text-main); }
+        .btn-plus:active { background: #f0f0f0; }
+
+        /* History Section */
+        .history-section {
+            padding: 30px 20px;
+            background: #fafafa;
+            flex-grow: 1;
+            margin-top: 30px;
+            border-top-left-radius: 30px;
+            border-top-right-radius: 30px;
+            text-align: center;
+        }
+        .drag-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 15px; }
+        
+        .history-label { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 20px; }
+
+        /* Budget Cards */
+        .cards-container {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 20px;
+            text-align: left;
+            scrollbar-width: none; /* Hide scrollbar for Firefox */
+        }
+        .cards-container::-webkit-scrollbar { display: none; } /* Hide scrollbar for Chrome/Safari */
+        
+        .card {
+            min-width: 120px;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+        .card-title { font-weight: 700; font-size: 0.75rem; letter-spacing: 1px; }
+        .card-sub { font-size: 0.6rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; }
+        .card-amount { font-size: 1.5rem; font-weight: 700; }
+        .card-track { font-size: 0.65rem; color: var(--text-muted); border-top: 1px dashed #eee; padding-top: 10px; margin-top: 10px; }
+
+        .transaction-list { margin: 20px 0; color: var(--text-muted); font-size: 0.9rem; }
+        .tx-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #eee; font-size: 0.85rem; color: var(--text-main); }
+        
+        .clear-btn { background: none; border: none; color: var(--red); cursor: pointer; font-family: inherit; font-size: 0.85rem; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2>Dynamic Budget</h2>
-        
-        <div class="salary-group">
-            <label>Total Salary Amount:</label>
-            <input type="number" id="salary" value="10000" oninput="calculate()">
-        </div>
+<div class="app-container">
+    <header>
+        brokedaddy
+        <div class="header-icons">⚑ ılı</div>
+    </header>
 
-        <!-- The header for the columns -->
-        <div class="row" style="font-weight: bold; color: #666; font-size: 14px;">
-            <div style="flex: 2;">Category</div>
-            <div style="flex: 1; text-align: center;">%</div>
-            <div style="flex: 1.2; text-align: right; padding-right: 40px;">Amount</div>
-        </div>
-
-        <!-- Categories will be injected here by JavaScript -->
-        <div id="category-list"></div>
-
-        <button class="add-btn" onclick="addCategory()">+ Add New Category</button>
-        
-        <div class="error-msg" id="pct-error">Warning: Percentages must add up to exactly 100%</div>
-
-        <div class="summary">
-            <div class="summary-row">
-                <span>Total %: <span id="total-pct">0</span>%</span>
-                <span><span id="total-amount">0.00</span></span>
-            </div>
+    <div class="top-section">
+        <div class="circle-progress">0% <br><span>Phone</span></div>
+        <div class="instructions">
+            use the "+" button to cash in money<br>
+            use the "-" button to add expense
         </div>
     </div>
 
-    <script>
-        // These are your starting categories. You can change them directly in the browser now!
-        let categories = [
-            { name: 'ধার শোধ', pct: 25 },
-            { name: 'মেডিকেল ফান্ড', pct: 5 },
-            { name: 'ইমারজেন্সি', pct: 10 },
-            { name: 'Ghuraghuri', pct: 5 },
-            { name: 'এক্সপেন্স', pct: 55 }
-        ];
+    <div class="zigzag"></div>
 
-        // This function draws the rows on the screen
-        function render() {
-            const list = document.getElementById('category-list');
-            list.innerHTML = ''; // Clear current list
-            
-            categories.forEach((cat, index) => {
-                list.innerHTML += `
-                    <div class="row">
-                        <input type="text" value="${cat.name}" oninput="updateName(${index}, this.value)" placeholder="Category Name">
-                        <input type="number" value="${cat.pct}" oninput="updatePct(${index}, this.value)">
-                        <span class="amount" id="amt-${index}">0</span>
-                        <button class="del-btn" onclick="removeCategory(${index})" title="Delete">X</button>
-                    </div>
-                `;
-            });
-            calculate(); // Recalculate everything after drawing
-        }
+    <div class="dashboard">
+        <div class="balance-area">
+            <div class="balance-label">total money left (BDT)</div>
+            <div class="balance-amount" id="ui-balance">0</div>
+            <div class="stats-row">
+                <div class="stat-spend" id="ui-spend">0 <span>total spend</span></div>
+                <div class="stat-waste" id="ui-waste">0 <span>total waste</span></div>
+            </div>
+        </div>
+        <div class="controls">
+            <button class="btn-circle btn-minus" onclick="addTransaction('expense')">-</button>
+            <button class="btn-circle btn-plus" onclick="addTransaction('income')">+</button>
+        </div>
+    </div>
 
-        // Functions to handle updates when you type
-        function updateName(index, val) { categories[index].name = val; }
+    <div class="history-section">
+        <div class="drag-handle"></div>
+        <div class="history-label">scroll sideways for budget / down for history</div>
         
-        function updatePct(index, val) {
-            categories[index].pct = parseFloat(val) || 0;
-            calculate();
+        <div class="cards-container">
+            <div class="card">
+                <div class="card-title">NEEDS</div>
+                <div class="card-sub">STAYING ALIVE</div>
+                <div class="card-amount">3,000</div>
+                <div class="card-track">ON TRACK</div>
+            </div>
+            <div class="card">
+                <div class="card-title">GROWTH</div>
+                <div class="card-sub">FUTURE BOSS</div>
+                <div class="card-amount">1,500</div>
+                <div class="card-track">ON TRACK</div>
+            </div>
+            <div class="card">
+                <div class="card-title">STABILITY</div>
+                <div class="card-sub">OOPS FUND</div>
+                <div class="card-amount">900</div>
+                <div class="card-track">ON TRACK</div>
+            </div>
+        </div>
+
+        <div class="transaction-list" id="ui-history">
+            no transactions yet
+        </div>
+
+        <button class="clear-btn" onclick="clearData()">[ clear history ]</button>
+    </div>
+</div>
+
+<script>
+    // --- State Management ---
+    let appData = {
+        balance: 0,
+        totalSpend: 0,
+        history: []
+    };
+
+    // --- Initialization ---
+    function init() {
+        const savedData = localStorage.getItem('brokedaddy_data');
+        if (savedData) {
+            appData = JSON.parse(savedData);
+        }
+        updateUI();
+    }
+
+    // --- Core Functions ---
+    function addTransaction(type) {
+        const amountStr = prompt(`Enter ${type} amount:`);
+        if (!amountStr) return; // User cancelled
+        
+        const amount = parseFloat(amountStr);
+        if (isNaN(amount) || amount <= 0) {
+            alert("Please enter a valid number.");
+            return;
         }
 
-        function addCategory() {
-            categories.push({ name: 'New Category', pct: 0 });
-            render();
+        let desc = "Cash in";
+        if (type === 'expense') {
+            desc = prompt("What was this expense for?") || "Misc Expense";
+            appData.balance -= amount;
+            appData.totalSpend += amount;
+        } else {
+            desc = prompt("Where did this income come from?") || "Income";
+            appData.balance += amount;
         }
 
-        function removeCategory(index) {
-            categories.splice(index, 1);
-            render();
+        // Add to history array
+        appData.history.unshift({
+            type: type,
+            amount: amount,
+            desc: desc,
+            date: new Date().toLocaleDateString()
+        });
+
+        saveData();
+        updateUI();
+    }
+
+    function clearData() {
+        if(confirm("Are you sure you want to delete all data?")) {
+            appData = { balance: 0, totalSpend: 0, history: [] };
+            saveData();
+            updateUI();
         }
+    }
 
-        // The main math engine
-        function calculate() {
-            const salary = parseFloat(document.getElementById('salary').value) || 0;
-            let totalPct = 0;
-            let totalAmt = 0;
+    // --- Utility Functions ---
+    function saveData() {
+        localStorage.setItem('brokedaddy_data', JSON.stringify(appData));
+    }
 
-            // Loop through each category to do the math
-            categories.forEach((cat, i) => {
-                totalPct += cat.pct;
-                const amt = (salary * (cat.pct / 100));
-                totalAmt += amt;
-                
-                // Update the specific row's amount text
-                const amtElement = document.getElementById('amt-'+i);
-                if(amtElement) amtElement.innerText = amt.toFixed(2);
-            });
-
-            // Update the bottom totals
-            document.getElementById('total-pct').innerText = totalPct;
-            document.getElementById('total-amount').innerText = totalAmt.toFixed(2);
-
-            // Show a warning if it doesn't equal exactly 100%
-            const errorMsg = document.getElementById('pct-error');
-            if (totalPct !== 100) {
-                errorMsg.style.display = 'block';
-                document.getElementById('total-pct').style.color = '#dc3545';
-            } else {
-                errorMsg.style.display = 'none';
-                document.getElementById('total-pct').style.color = 'black';
-            }
+    function updateUI() {
+        // Format numbers with commas (e.g., 3,760)
+        document.getElementById('ui-balance').innerText = appData.balance.toLocaleString('en-US');
+        document.getElementById('ui-spend').innerHTML = `${appData.totalSpend.toLocaleString('en-US')} <span>total spend</span>`;
+        
+        // Update History List
+        const historyContainer = document.getElementById('ui-history');
+        if (appData.history.length === 0) {
+            historyContainer.innerHTML = "no transactions yet";
+        } else {
+            historyContainer.innerHTML = appData.history.map(tx => `
+                <div class="tx-item">
+                    <span>${tx.desc} <small style="color:#aaa">(${tx.date})</small></span>
+                    <span style="color: ${tx.type === 'expense' ? '#ff4d4d' : '#1a1a1a'}">
+                        ${tx.type === 'expense' ? '-' : '+'}${tx.amount.toLocaleString('en-US')}
+                    </span>
+                </div>
+            `).join('');
         }
+    }
 
-        // Run this once when the page loads
-        render();
-    </script>
+    // Run the app on load
+    init();
+</script>
+
 </body>
 </html>
