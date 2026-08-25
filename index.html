@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Envelope Budget</title>
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f4f4f5;
+            --surface: #ffffff;
+            --text: #18181b;
+            --text-light: #71717a;
+            --accent: #2563eb;
+            --danger: #e11d48;
+            --success: #16a34a;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--bg); color: var(--text);
+            margin: 0; padding: 20px;
+            display: flex; justify-content: center;
+        }
+
+        .container { width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 20px; }
+
+        /* Top Balance Card */
+        .balance-card {
+            background: var(--text); color: var(--surface);
+            padding: 30px 20px; border-radius: 24px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .balance-label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; }
+        .balance-amount { font-size: 3rem; font-weight: 700; margin: 5px 0; }
+        .total-spent { font-size: 0.9rem; color: #fca5a5; margin-top: 5px; }
+
+        /* Wallets Section */
+        .wallet-row { display: flex; gap: 10px; margin-bottom: 5px; }
+        .wallet-card {
+            flex: 1; background: var(--surface); padding: 15px 10px; 
+            border-radius: 16px; border: 1px solid #e4e4e7;
+            text-align: center;
+        }
+        .wallet-name { font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; font-weight: 700; margin-bottom: 5px; }
+        .wallet-bal { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+
+        /* Action Buttons */
+        .action-row { display: flex; gap: 15px; }
+        .btn {
+            flex: 1; padding: 15px; border: none; border-radius: 16px;
+            font-family: inherit; font-size: 1rem; font-weight: 700;
+            cursor: pointer; transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-income { background: var(--surface); border: 2px solid var(--text); color: var(--text); }
+        .btn-expense { background: var(--danger); color: white; border: 2px solid var(--danger); }
+        .btn-transfer { width: 100%; background: transparent; border: 2px dashed var(--text); margin-top: -5px; }
+
+        /* Categories Grid */
+        .section-title { font-size: 1.1rem; font-weight: 700; margin: 10px 0 0 0; text-transform: uppercase;}
+        
+        .grid { display: flex; flex-direction: column; gap: 12px; }
+        .category-card {
+            background: var(--surface); padding: 15px 20px; border-radius: 16px;
+            border: 1px solid #e4e4e7; border-left: 5px solid var(--accent);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .cat-info h3 { margin: 0 0 5px 0; font-size: 1rem; }
+        .cat-stats { font-size: 0.75rem; color: var(--text-light); }
+        .cat-balance { text-align: right; }
+        .cat-balance .rem { font-size: 1.3rem; font-weight: 700; color: var(--text); }
+        .cat-balance .spent { font-size: 0.8rem; color: var(--danger); }
+
+        /* History & Delete Button */
+        .history-card { background: var(--surface); padding: 20px; border-radius: 20px; border: 1px solid #e4e4e7; min-height: 150px; }
+        .tx-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f4f4f5; }
+        .tx-item:last-child { border-bottom: none; }
+        .tx-info h4 { margin: 0; font-size: 0.95rem; }
+        .tx-info p { margin: 4px 0 0 0; font-size: 0.75rem; color: var(--text-light); }
+        .tx-amt { display: flex; align-items: center; font-weight: 700; font-size: 1.1rem; }
+        .amt-in { color: var(--success); }
+        .amt-out { color: var(--danger); }
+        .amt-transfer { color: var(--text); }
+        
+        .delete-btn {
+            background: #ff4d4d22; color: var(--danger); border: none;
+            border-radius: 50%; width: 26px; height: 26px; margin-left: 12px;
+            cursor: pointer; font-size: 0.8rem; font-weight: bold;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .delete-btn:hover { background: var(--danger); color: white; }
+
+        /* Modal / Dialog */
+        dialog {
+            border: none; border-radius: 20px; padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 90%; max-width: 350px;
+            background: var(--surface);
+        }
+        dialog::backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px;
+            font-family: inherit; font-size: 1rem; box-sizing: border-box;
+        }
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+        
+        .reset-btn { text-align: center; color: var(--text-light); font-size: 0.8rem; margin-top: 20px; cursor: pointer; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="balance-card">
+        <div class="balance-label">Total Cash Remaining</div>
+        <div class="balance-amount" id="ui-total-rem">0</div>
+        <div class="total-spent" id="ui-total-spent">Total Spent: 0</div>
+    </div>
+
+    <!-- Wallets Display -->
+    <div class="wallet-row">
+        <div class="wallet-card">
+            <div class="wallet-name">Cash</div>
+            <div class="wallet-bal" id="ui-wall-cash">0</div>
+        </div>
+        <div class="wallet-card">
+            <div class="wallet-name">M-Banking</div>
+            <div class="wallet-bal" id="ui-wall-mbank">0</div>
+        </div>
+        <div class="wallet-card">
+            <div class="wallet-name">Bank</div>
+            <div class="wallet-bal" id="ui-wall-bank">0</div>
+        </div>
+    </div>
+
+    <div class="action-row">
+        <button class="btn btn-income" onclick="openIncomeModal()">+ Add Salary</button>
+        <button class="btn btn-expense" onclick="openExpenseModal()">- Add Expense</button>
+    </div>
+    <!-- Transfer Button -->
+    <button class="btn btn-transfer" onclick="openTransferModal()">⇄ Transfer Money</button>
+
+    <div class="section-title">Where is my money?</div>
+    <div class="grid" id="categories-container">
+        <!-- Rendered by JS -->
+    </div>
+
+    <div class="section-title">History</div>
+    <div class="history-card" id="ui-history"></div>
+
+    <div class="reset-btn" onclick="clearData()">Reset All Data</div>
+</div>
+
+<!-- Income Popup Modal -->
+<dialog id="incomeModal">
+    <h3 style="margin-top:0;">Add Income</h3>
+    <div class="form-group">
+        <label>Amount (৳)</label>
+        <input type="number" id="incAmount" placeholder="e.g. 10000">
+    </div>
+    <div class="form-group">
+        <label>Where is this money going?</label>
+        <select id="incWallet">
+            <option value="mbank">M-Banking (bKash/Nagad)</option>
+            <option value="bank">Bank Account</option>
+            <option value="cash">Cash (ক্যাশ)</option>
+        </select>
+    </div>
+    <div class="modal-btns">
+        <button class="btn" style="background:#e4e4e7;" onclick="closeModal('incomeModal')">Cancel</button>
+        <button class="btn btn-income" onclick="saveIncome()">Save Income</button>
+    </div>
+</dialog>
+
+<!-- Expense Popup Modal -->
+<dialog id="expenseModal">
+    <h3 style="margin-top:0;">Add Expense</h3>
+    <div class="form-group">
+        <label>Amount (৳)</label>
+        <input type="number" id="expAmount" placeholder="e.g. 500">
+    </div>
+    <div class="form-group">
+        <label>From which Account/Wallet?</label>
+        <select id="expWallet">
+            <option value="cash">Cash (ক্যাশ)</option>
+            <option value="mbank">M-Banking (bKash/Nagad)</option>
+            <option value="bank">Bank Account</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>For which Category?</label>
+        <select id="expCategory">
+            <option value="main">এক্সপেন্স (55%)</option>
+            <option value="debt">ধার শোধ (25%)</option>
+            <option value="emergency">ইমারজেন্সি (10%)</option>
+            <option value="medical">মেডিকেল ফান্ড (5%)</option>
+            <option value="travel">Ghuraghuri (5%)</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Description</label>
+        <input type="text" id="expDesc" placeholder="e.g. Paid brother">
+    </div>
+    <div class="modal-btns">
+        <button class="btn" style="background:#e4e4e7;" onclick="closeModal('expenseModal')">Cancel</button>
+        <button class="btn btn-expense" onclick="saveExpense()">Save Expense</button>
+    </div>
+</dialog>
+
+<!-- Transfer Popup Modal -->
+<dialog id="transferModal">
+    <h3 style="margin-top:0;">Transfer Money</h3>
+    <div class="form-group">
+        <label>Amount (৳)</label>
+        <input type="number" id="transAmount" placeholder="e.g. 1000">
+    </div>
+    <div class="form-group">
+        <label>Transfer FROM</label>
+        <select id="transFrom">
+            <option value="bank">Bank Account</option>
+            <option value="mbank">M-Banking (bKash/Nagad)</option>
+            <option value="cash">Cash (ক্যাশ)</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Transfer TO</label>
+        <select id="transTo">
+            <option value="cash">Cash (ক্যাশ)</option>
+            <option value="mbank">M-Banking (bKash/Nagad)</option>
+            <option value="bank">Bank Account</option>
+        </select>
+    </div>
+    <div class="modal-btns">
+        <button class="btn" style="background:#e4e4e7;" onclick="closeModal('transferModal')">Cancel</button>
+        <button class="btn" style="background: var(--text); color: white;" onclick="saveTransfer()">Transfer</button>
+    </div>
+</dialog>
+
+<script>
+    let appData = {
+        totalIncomeAllTime: 0,
+        wallets: {
+            cash: { name: "Cash", balance: 0 },
+            mbank: { name: "M-Banking", balance: 0 },
+            bank: { name: "Bank", balance: 0 }
+        },
+        categories: {
+            main: { name: "এক্সপেন্স (General)", pct: 0.55, allocated: 0, spent: 0, color: "#2563eb" },
+            debt: { name: "ধার শোধ", pct: 0.25, allocated: 0, spent: 0, color: "#e11d48" },
+            emergency: { name: "ইমারজেন্সি", pct: 0.10, allocated: 0, spent: 0, color: "#f59e0b" },
+            medical: { name: "মেডিকেল ফান্ড", pct: 0.05, allocated: 0, spent: 0, color: "#10b981" },
+            travel: { name: "Ghuraghuri", pct: 0.05, allocated: 0, spent: 0, color: "#8b5cf6" }
+        },
+        history: []
+    };
+
+    function init() {
+        const saved = localStorage.getItem('broke_daddy_envelope_v2');
+        if (saved) {
+            let parsedData = JSON.parse(saved);
+            if(!parsedData.wallets) {
+                parsedData.wallets = { cash: { balance: 0 }, mbank: { balance: 0 }, bank: { balance: 0 } };
+            }
+            appData = parsedData;
+        }
+        updateUI();
+    }
+
+    // Modal Controls
+    function openIncomeModal() { 
+        document.getElementById('incAmount').value = ''; 
+        document.getElementById('incomeModal').showModal(); 
+    }
+    function openExpenseModal() { 
+        document.getElementById('expAmount').value = ''; 
+        document.getElementById('expDesc').value = ''; 
+        document.getElementById('expenseModal').showModal(); 
+    }
+    function openTransferModal() {
+        document.getElementById('transAmount').value = '';
+        document.getElementById('transferModal').showModal();
+    }
+    function closeModal(id) { document.getElementById(id).close(); }
+
+    // Save Income Logic
+    function saveIncome() {
+        let amt = parseFloat(document.getElementById('incAmount').value);
+        let walletKey = document.getElementById('incWallet').value;
+
+        if (!amt || isNaN(amt) || amt <= 0) { alert("Enter a valid amount"); return; }
+
+        appData.totalIncomeAllTime += amt;
+        appData.wallets[walletKey].balance += amt; 
+        
+        for (let key in appData.categories) {
+            appData.categories[key].allocated += (amt * appData.categories[key].pct);
+        }
+
+        // We now save the 'walletKey' so we can accurately reverse it if deleted
+        appData.history.unshift({ 
+            type: 'income', amount: amt, wallet: walletKey,
+            desc: `Salary Added to ${appData.wallets[walletKey].name}`, 
+            date: new Date().toLocaleDateString() 
+        });
+
+        saveData(); closeModal('incomeModal'); updateUI();
+    }
+
+    // Save Expense Logic
+    function saveExpense() {
+        let amt = parseFloat(document.getElementById('expAmount').value);
+        let catKey = document.getElementById('expCategory').value;
+        let walletKey = document.getElementById('expWallet').value;
+        let desc = document.getElementById('expDesc').value || "Expense";
+
+        if (!amt || isNaN(amt) || amt <= 0) { alert("Enter a valid amount"); return; }
+        
+        appData.categories[catKey].spent += amt;
+        appData.wallets[walletKey].balance -= amt; 
+
+        // We save the 'wallet' and 'category' keys for accurate deletion
+        appData.history.unshift({ 
+            type: 'expense', amount: amt, wallet: walletKey, category: catKey,
+            desc: `${desc} (${appData.categories[catKey].name}) [from ${appData.wallets[walletKey].name}]`, 
+            date: new Date().toLocaleDateString() 
+        });
+
+        saveData(); closeModal('expenseModal'); updateUI();
+    }
+
+    // Save Transfer Logic
+    function saveTransfer() {
+        let amt = parseFloat(document.getElementById('transAmount').value);
+        let fromKey = document.getElementById('transFrom').value;
+        let toKey = document.getElementById('transTo').value;
+
+        if (!amt || isNaN(amt) || amt <= 0) { alert("Enter a valid amount"); return; }
+        if (fromKey === toKey) { alert("You must select two different wallets!"); return; }
+
+        appData.wallets[fromKey].balance -= amt;
+        appData.wallets[toKey].balance += amt;
+
+        appData.history.unshift({ 
+            type: 'transfer', amount: amt, from: fromKey, to: toKey,
+            desc: `Transfer: ${appData.wallets[fromKey].name} ➔ ${appData.wallets[toKey].name}`, 
+            date: new Date().toLocaleDateString() 
+        });
+
+        saveData(); closeModal('transferModal'); updateUI();
+    }
+
+    // NEW: Delete/Undo Transaction Logic
+    function deleteTransaction(index) {
+        if (!confirm("Are you sure you want to delete this and reverse the math?")) return;
+
+        let tx = appData.history[index];
+
+        // 1. Reverse an Income
+        if (tx.type === 'income') {
+            if (tx.wallet && appData.wallets[tx.wallet]) {
+                appData.wallets[tx.wallet].balance -= tx.amount;
+            }
+            for (let key in appData.categories) {
+                appData.categories[key].allocated -= (tx.amount * appData.categories[key].pct);
+            }
+            appData.totalIncomeAllTime -= tx.amount;
+        } 
+        // 2. Reverse an Expense
+        else if (tx.type === 'expense') {
+            if (tx.wallet && appData.wallets[tx.wallet]) {
+                appData.wallets[tx.wallet].balance += tx.amount;
+            }
+            if (tx.category && appData.categories[tx.category]) {
+                appData.categories[tx.category].spent -= tx.amount;
+            }
+        } 
+        // 3. Reverse a Transfer
+        else if (tx.type === 'transfer') {
+            if (tx.from && appData.wallets[tx.from]) {
+                appData.wallets[tx.from].balance += tx.amount;
+            }
+            if (tx.to && appData.wallets[tx.to]) {
+                appData.wallets[tx.to].balance -= tx.amount;
+            }
+        }
+
+        // Remove from the history list
+        appData.history.splice(index, 1);
+        
+        saveData();
+        updateUI();
+    }
+
+    function clearData() {
+        if(confirm("Erase everything?")) {
+            localStorage.removeItem('broke_daddy_envelope_v2');
+            location.reload(); 
+        }
+    }
+
+    function saveData() { localStorage.setItem('broke_daddy_envelope_v2', JSON.stringify(appData)); }
+
+    function updateUI() {
+        let grandTotalRemaining = 0;
+        let grandTotalSpent = 0;
+        let categoryHTML = '';
+
+        for (let key in appData.categories) {
+            let cat = appData.categories[key];
+            let remaining = cat.allocated - cat.spent;
+            
+            grandTotalRemaining += remaining;
+            grandTotalSpent += cat.spent;
+
+            categoryHTML += `
+                <div class="category-card" style="border-left-color: ${cat.color}">
+                    <div class="cat-info">
+                        <h3>${cat.name}</h3>
+                        <div class="cat-stats">Allocated: ${cat.allocated.toLocaleString()} ৳</div>
+                    </div>
+                    <div class="cat-balance">
+                        <div class="rem">${remaining.toLocaleString()} ৳</div>
+                        <div class="spent">Spent: ${cat.spent.toLocaleString()} ৳</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        document.getElementById('ui-total-rem').innerText = grandTotalRemaining.toLocaleString() + " ৳";
+        document.getElementById('ui-total-spent').innerText = "Total Spent: " + grandTotalSpent.toLocaleString() + " ৳";
+        
+        document.getElementById('ui-wall-cash').innerText = (appData.wallets?.cash?.balance || 0).toLocaleString() + " ৳";
+        document.getElementById('ui-wall-mbank').innerText = (appData.wallets?.mbank?.balance || 0).toLocaleString() + " ৳";
+        document.getElementById('ui-wall-bank').innerText = (appData.wallets?.bank?.balance || 0).toLocaleString() + " ৳";
+
+        document.getElementById('categories-container').innerHTML = categoryHTML;
+
+        const histEl = document.getElementById('ui-history');
+        if (appData.history.length === 0) {
+            histEl.innerHTML = '<p style="text-align:center; color: #71717a;">No transactions yet.</p>';
+        } else {
+            histEl.innerHTML = appData.history.map((tx, index) => {
+                let sign = tx.type === 'income' ? '+' : (tx.type === 'expense' ? '-' : '⇄ ');
+                let colorClass = tx.type === 'income' ? 'amt-in' : (tx.type === 'expense' ? 'amt-out' : 'amt-transfer');
+                
+                // Added the delete button right next to the amount
+                return `
+                <div class="tx-item">
+                    <div class="tx-info"><h4>${tx.desc}</h4><p>${tx.date}</p></div>
+                    <div class="tx-amt ${colorClass}">
+                        ${sign}${tx.amount.toLocaleString()} ৳
+                        <button class="delete-btn" onclick="deleteTransaction(${index})" title="Delete Transaction">✕</button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+    }
+
+    init();
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+</body>
+</html>
